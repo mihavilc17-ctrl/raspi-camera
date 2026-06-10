@@ -1,1 +1,12 @@
-Token_2: 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
+[2:42:15.301017586] [3116]  INFO Camera camera_manager.cpp:330 libcamera v0.5.2+99-bfd68f78
+[2:42:15.360163636] [3119]  INFO IPAProxy ipa_proxy.cpp:180 Using tuning file /usr/share/libcamera/ipa/rpi/vc4/imx477.json
+[2:42:15.379364072] [3119]  INFO Camera camera_manager.cpp:220 Adding camera '/base/soc/i2c0mux/i2c@1/imx477@1a' for pipeline handler rpi/vc4
+[2:42:15.379580582] [3119]  INFO RPI vc4.cpp:440 Registered camera /base/soc/i2c0mux/i2c@1/imx477@1a to Unicam device /dev/media3 and ISP device /dev/media0
+[2:42:15.379700634] [3119]  INFO RPI pipeline_base.cpp:1107 Using configuration file '/usr/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml'
+[2:42:15.402111594] [3116]  INFO Camera camera.cpp:1215 configuring streams: (0) 1920x1080-RGB888/Rec709/Rec709/None/Full (1) 2028x1080-SBGGR12_CSI2P/RAW
+[2:42:15.403045085] [3119]  INFO RPI vc4.cpp:615 Sensor: /base/soc/i2c0mux/i2c@1/imx477@1a - Selected sensor format: 2028x1080-SBGGR12_1X12/RAW - Selected unicam format: 2028x1080-pBCC/RAW
+Traceback (most recent call last):
+  File "/home/miha/raspi-camera/rpi-camera.py", line 37, in <module>
+    picam2.wait_frame()
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'Picamera2' object has no attribute 'wait_frame'
