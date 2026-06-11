@@ -6,7 +6,7 @@ FPS = 100
 EXPOSURE_US = 5000
 N_FRAMES = 100
 ROI_X, ROI_Y = 1522, 1140      # začetek izreza (sredina senzorja)
-ROI_W, ROI_H = 1012, 720       # velikost izreza
+ROI_W, ROI_H = 1332, 990       # velikost izreza
 RESOLUTION = (ROI_W, ROI_H)    # resolucija = ROI, brez skaliranja
 
 # === IZRAČUN ===
@@ -15,8 +15,10 @@ FRAME_DURATION = int(1e6 / FPS)
 picam2 = Picamera2()
 
 config = picam2.create_video_configuration(
-    main={"size": RESOLUTION, "format": "RGB888"}
+    main={"size": RESOLUTION, "format": "RGB888"},
+    buffer_count=8
 )
+
 picam2.configure(config)
 
 picam2.set_controls({
@@ -25,7 +27,7 @@ picam2.set_controls({
     "AeEnable": False,
     "AwbEnable": False,
     "AnalogueGain": 1.0,
-    "ScalerCrop": (ROI_X, ROI_Y, ROI_W, ROI_H),
+    "ScalerCrop": (696, 528, 2664, 1980),
 })
 
 # Počakaj da se nastavitve stabilizirajo
@@ -59,7 +61,7 @@ for i in range(N_FRAMES):
     if i % 10 == 0:
         elapsed = time.time() - t_start
         print(f"Frame {i}/{N_FRAMES} — {elapsed:.2f}s — trenutni FPS: {i/elapsed:.1f}")
-        
+
 picam2.stop()
 
 # === ANALIZA NATANČNOSTI ===
