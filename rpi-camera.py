@@ -2,11 +2,12 @@ from picamera2 import Picamera2
 import numpy as np
 
 # === PARAMETRI ===
-RESOLUTION = (1920, 1080)
-FPS = 30
+FPS = 100
 EXPOSURE_US = 5000
 N_FRAMES = 100
-ROI = (400, 300, 800, 600)
+ROI_X, ROI_Y = 1522, 1140      # začetek izreza (sredina senzorja)
+ROI_W, ROI_H = 1012, 720       # velikost izreza
+RESOLUTION = (ROI_W, ROI_H)    # resolucija = ROI, brez skaliranja
 
 # === IZRAČUN ===
 FRAME_DURATION = int(1e6 / FPS)
@@ -24,25 +25,27 @@ picam2.set_controls({
     "AeEnable": False,
     "AwbEnable": False,
     "AnalogueGain": 1.0,
+    "ScalerCrop": (ROI_X, ROI_Y, ROI_W, ROI_H),
 })
-
-if ROI is not None:
-    picam2.set_controls({"ScalerCrop": ROI})
-
-picam2.start()
 
 # Počakaj da se nastavitve stabilizirajo
 for _ in range(10):
     request = picam2.capture_request()
     request.release()
 
-# === ZAJEM ===
-frames = np.empty((N_FRAMES, *RESOLUTION[::-1], 3), dtype=np.uint8)
+picam2.start()
+
+# Stabilizacija
+for _ in range(10):
+    picam2.capture_array("main")
+
+# === ZAJEM — brez capture_request overhead ===
+frames = np.empty((N_FRAMES, ROI_H, ROI_W, 3), dtype=np.uint8) #? 8bit
 timestamps = np.empty(N_FRAMES, dtype=np.int64)
 
 for i in range(N_FRAMES):
     request = picam2.capture_request()
-    frames[i] = request.make_array("main")
+    np.copyto(frames[i], request.make_array("main"))  # direktna kopija brez alokacije
     timestamps[i] = request.get_metadata()["SensorTimestamp"]
     request.release()
 
