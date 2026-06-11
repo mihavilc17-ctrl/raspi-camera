@@ -64,6 +64,10 @@ for i in range(N_FRAMES):
 
 picam2.stop()
 
+np.save("frames.npy", frames)
+np.save("timestamps.npy", timestamps)
+print("Shranjeno: frames.npy, timestamps.npy")
+
 # === ANALIZA NATANČNOSTI ===
 diffs = np.diff(timestamps) / 1e6
 print(f"Zajeto: {N_FRAMES} slik")
