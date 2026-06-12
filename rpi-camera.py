@@ -62,6 +62,9 @@ for i in range(N_FRAMES):
 
 picam2.stop()
 
+np.save(frames)
+np.save(timestamps)
+
 np.save("frames.npy", frames)
 np.save("timestamps.npy", timestamps)
 print("Shranjeno!")
