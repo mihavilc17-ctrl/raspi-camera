@@ -1,15 +1,13 @@
 from picamera2 import Picamera2
 import numpy as np
+import time
 
 # === PARAMETRI ===
 FPS = 100
 EXPOSURE_US = 5000
 N_FRAMES = 100
-ROI_X, ROI_Y = 1522, 1140      # začetek izreza (sredina senzorja)
-ROI_W, ROI_H = 1332, 990       # velikost izreza
-RESOLUTION = (ROI_W, ROI_H)    # resolucija = ROI, brez skaliranja
-
-# === IZRAČUN ===
+ROI_W, ROI_H = 1332, 990
+RESOLUTION = (ROI_W, ROI_H)
 FRAME_DURATION = int(1e6 / FPS)
 
 picam2 = Picamera2()
@@ -18,7 +16,6 @@ config = picam2.create_video_configuration(
     main={"size": RESOLUTION, "format": "RGB888"},
     buffer_count=8
 )
-
 picam2.configure(config)
 
 picam2.set_controls({
@@ -30,47 +27,45 @@ picam2.set_controls({
     "ScalerCrop": (696, 528, 2664, 1980),
 })
 
-# Počakaj da se nastavitve stabilizirajo
+picam2.start()  # najprej start!
+
+# Stabilizacija — počakaj 10 frameov
 for _ in range(10):
-    request = picam2.capture_request()
+    request = picam2.capture_request(wait=2.0)  # timeout 2s
+    if request is None:
+        print("Kamera se ne odziva!")
+        picam2.stop()
+        exit()
     request.release()
 
-import time
+print("Kamera stabilizirana, začenjam zajem...")
 
-picam2.start()
-
-# Stabilizacija
-for _ in range(10):
-    picam2.capture_array("main")
-
-# === ZAJEM — brez capture_request overhead ===
-frames = np.empty((N_FRAMES, ROI_H, ROI_W, 3), dtype=np.uint8) #? 8bit
+# === ZAJEM ===
+frames = np.empty((N_FRAMES, ROI_H, ROI_W, 3), dtype=np.uint8)
 timestamps = np.empty(N_FRAMES, dtype=np.int64)
 
 t_start = time.time()
 
 for i in range(N_FRAMES):
-    request = picam2.capture_request()
+    request = picam2.capture_request(wait=2.0)  # timeout 2s
     if request is None:
         print(f"Timeout pri frame {i}!")
         break
-    np.copyto(frames[i], request.make_array("main"))  # direktna kopija brez alokacije
+    np.copyto(frames[i], request.make_array("main"))
     timestamps[i] = request.get_metadata()["SensorTimestamp"]
     request.release()
 
     if i % 10 == 0:
         elapsed = time.time() - t_start
-        print(f"Frame {i}/{N_FRAMES} — {elapsed:.2f}s — trenutni FPS: {i/elapsed:.1f}")
+        fps_actual = i / elapsed if elapsed > 0 else 0
+        print(f"Frame {i}/{N_FRAMES} — {elapsed:.2f}s — FPS: {fps_actual:.1f}")
 
 picam2.stop()
 
 np.save("frames.npy", frames)
 np.save("timestamps.npy", timestamps)
-print("Shranjeno: frames.npy, timestamps.npy")
+print("Shranjeno!")
 
-# === ANALIZA NATANČNOSTI ===
 diffs = np.diff(timestamps) / 1e6
-print(f"Zajeto: {N_FRAMES} slik")
 print(f"Povprečni interval: {diffs.mean():.3f} ms (cilj: {1000/FPS:.3f} ms)")
 print(f"Std deviacija: {diffs.std():.3f} ms")
-print(f"Frames shape: {frames.shape}")
